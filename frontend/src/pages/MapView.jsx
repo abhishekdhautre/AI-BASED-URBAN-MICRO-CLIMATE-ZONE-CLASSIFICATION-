@@ -2,17 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import { Layers, Info } from 'lucide-react'
 import { LCZ_CLASSES } from '../data/lczData'
 
-// Pune bounding box center
 const PUNE_CENTER = [18.5204, 73.8567]
 
 const LAYER_OPTIONS = [
-  { id: 'lcz', label: 'LCZ Classification', color: '#3b82f6' },
+  { id: 'lcz', label: 'LCZ Classification', color: '#d97706' },
   { id: 'lst', label: 'Heat / LST', color: '#ef4444' },
   { id: 'vegetation', label: 'Vegetation (NDVI)', color: '#10b981' },
   { id: 'builtup', label: 'Built-up Intensity', color: '#f97316' },
 ]
 
-// Mock GeoJSON features for Pune neighborhoods
 const MOCK_GEOJSON = {
   type: 'FeatureCollection',
   features: [
@@ -30,16 +28,13 @@ const MOCK_GEOJSON = {
 export default function MapView() {
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
-  const markersRef = useRef([])
   const [activeLayers, setActiveLayers] = useState(['lcz'])
   const [selectedFeature, setSelectedFeature] = useState(null)
 
   useEffect(() => {
-    // Dynamically import Leaflet to avoid SSR issues
     import('leaflet').then((L) => {
       if (mapInstanceRef.current) return
 
-      // Fix default icon paths
       delete L.Icon.Default.prototype._getIconUrl
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -57,7 +52,6 @@ export default function MapView() {
 
       L.control.zoom({ position: 'bottomright' }).addTo(map)
 
-      // Add mock markers
       MOCK_GEOJSON.features.forEach((feature) => {
         const { name, lcz, lst } = feature.properties
         const [lng, lat] = feature.geometry.coordinates
@@ -65,7 +59,7 @@ export default function MapView() {
 
         const marker = L.circleMarker([lat, lng], {
           radius: 10,
-          fillColor: lczInfo?.color || '#64748b',
+          fillColor: lczInfo?.color || '#52525b',
           color: '#fff',
           weight: 1.5,
           opacity: 1,
@@ -73,7 +67,6 @@ export default function MapView() {
         }).addTo(map)
 
         marker.on('click', () => setSelectedFeature({ name, lcz, lst, lczInfo }))
-        markersRef.current.push(marker)
       })
     })
 
@@ -85,21 +78,17 @@ export default function MapView() {
     }
   }, [])
 
-  const toggleLayer = (id) => {
-    setActiveLayers(prev =>
-      prev.includes(id) ? prev.filter(l => l !== id) : [...prev, id]
-    )
-  }
+  const toggleLayer = (id) =>
+    setActiveLayers(prev => prev.includes(id) ? prev.filter(l => l !== id) : [...prev, id])
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-1">Interactive Map</h1>
-        <p className="text-slate-400 text-sm">Pune LCZ & heat layer visualization — mock data shown</p>
+        <h1 className="text-2xl font-bold text-white mb-1">Interactive Map</h1>
+        <p className="text-zinc-500 text-sm">Pune LCZ & heat layer visualization — mock data shown</p>
       </div>
 
       <div className="grid lg:grid-cols-4 gap-4">
-        {/* Map */}
         <div className="lg:col-span-3">
           <div className="card p-0 overflow-hidden" style={{ height: '560px' }}>
             <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -107,67 +96,59 @@ export default function MapView() {
           </div>
         </div>
 
-        {/* Controls */}
         <div className="space-y-4">
-          {/* Layer controls */}
           <div className="card">
             <div className="flex items-center gap-2 mb-3">
-              <Layers size={15} className="text-slate-400" />
-              <p className="text-sm font-semibold">Layers</p>
+              <Layers size={15} className="text-zinc-500" />
+              <p className="text-sm font-semibold text-zinc-200">Layers</p>
             </div>
             <div className="space-y-2">
               {LAYER_OPTIONS.map(({ id, label, color }) => (
-                <label key={id} className="flex items-center gap-2.5 cursor-pointer group">
+                <label key={id} className="flex items-center gap-2.5 cursor-pointer group" onClick={() => toggleLayer(id)}>
                   <div
-                    className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors`}
-                    style={{
-                      borderColor: color,
-                      backgroundColor: activeLayers.includes(id) ? color : 'transparent',
-                    }}
-                    onClick={() => toggleLayer(id)}
+                    className="w-4 h-4 rounded border-2 flex items-center justify-center transition-colors shrink-0"
+                    style={{ borderColor: color, backgroundColor: activeLayers.includes(id) ? color : 'transparent' }}
                   >
-                    {activeLayers.includes(id) && <span className="text-white text-xs">✓</span>}
+                    {activeLayers.includes(id) && <span className="text-white text-xs leading-none">✓</span>}
                   </div>
-                  <span className="text-xs text-slate-400 group-hover:text-slate-200 transition-colors">{label}</span>
+                  <span className="text-xs text-zinc-500 group-hover:text-zinc-300 transition-colors">{label}</span>
                 </label>
               ))}
             </div>
-            <p className="text-xs text-slate-600 mt-3 pt-3 border-t border-[#1e2d45]">
+            <p className="text-xs text-zinc-700 mt-3 pt-3 border-t border-[#242424]">
               Real GIS layers can be connected via WMS/WFS endpoints
             </p>
           </div>
 
-          {/* Legend */}
           <div className="card">
-            <p className="text-sm font-semibold mb-3">LCZ Legend</p>
+            <p className="text-sm font-semibold mb-3 text-zinc-200">LCZ Legend</p>
             <div className="space-y-1.5 max-h-48 overflow-y-auto">
               {LCZ_CLASSES.slice(0, 10).map((lcz) => (
                 <div key={lcz.id} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: lcz.color }} />
-                  <span className="text-xs text-slate-400">{lcz.code} — {lcz.name}</span>
+                  <span className="text-xs text-zinc-500">{lcz.code} — {lcz.name}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Selected feature */}
           {selectedFeature && (
-            <div className="card border-blue-600/40">
+            <div className="card border-zinc-600">
               <div className="flex items-center gap-2 mb-2">
-                <Info size={14} className="text-blue-400" />
-                <p className="text-sm font-semibold">{selectedFeature.name}</p>
+                <Info size={14} className="text-amber-400" />
+                <p className="text-sm font-semibold text-zinc-200">{selectedFeature.name}</p>
               </div>
               <div className="space-y-1.5 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">LCZ Class</span>
-                  <span className="text-slate-200 font-medium">{selectedFeature.lcz}</span>
+                  <span className="text-zinc-600">LCZ Class</span>
+                  <span className="text-zinc-200 font-medium">{selectedFeature.lcz}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Class Name</span>
-                  <span className="text-slate-200">{selectedFeature.lczInfo?.name}</span>
+                  <span className="text-zinc-600">Class Name</span>
+                  <span className="text-zinc-300">{selectedFeature.lczInfo?.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Mock LST</span>
+                  <span className="text-zinc-600">Mock LST</span>
                   <span className="text-orange-400 font-medium">{selectedFeature.lst}°C</span>
                 </div>
               </div>
@@ -176,7 +157,7 @@ export default function MapView() {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-2 text-xs text-slate-600">
+      <div className="mt-4 flex items-center gap-2 text-xs text-zinc-700">
         <Info size={12} />
         Map shows mock sample points. Connect real GeoTIFF/GeoJSON layers in the backend for production use.
       </div>
